@@ -1,16 +1,3 @@
-/* Scroll Container */
-.scroll-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    visibility: hidden;
-    z-index: -1;
-    pointer-events: none;
-}
-
 /* Preloader */
 .preloader {
     position: fixed;
@@ -18,22 +5,21 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #ffffff;
+    background-color: white;
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 999999;
+    z-index: 10000;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease-in-out;
 }
 
 .loader {
-    position: relative;
-    width: min(150px, 40vw); /* Responsive size */
-    height: min(150px, 40vw); /* Responsive size */
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 150px;
+    height: 150px;
 }
 
 .loading-logo {
@@ -55,21 +41,6 @@
     100% {
         transform: scale(0.95);
         opacity: 0.8;
-    }
-}
-
-/* Media queries for smaller screens */
-@media (max-width: 768px) {
-    .loader {
-        width: min(120px, 30vw);
-        height: min(120px, 30vw);
-    }
-}
-
-@media (max-width: 480px) {
-    .loader {
-        width: min(100px, 25vw);
-        height: min(100px, 25vw);
     }
 }
 

@@ -1,5 +1,7 @@
 // Loading animation handler
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Loading script initialized');
+
     const preloader = document.querySelector('.preloader');
     const loader = preloader.querySelector('.loader');
     
@@ -10,60 +12,91 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingLogo.alt = 'Loading...';
     loader.appendChild(loadingLogo);
 
-    // Function to handle loading animation
-    function handleLoading() {
+    // Function to scroll to bottom silently
+    function silentScroll() {
         return new Promise((resolve) => {
-            // Show preloader
-            preloader.style.display = 'flex';
-            requestAnimationFrame(() => {
-                preloader.style.opacity = '1';
-            });
+            // Create a hidden container that will handle the scroll
+            const scrollContainer = document.createElement('div');
+            scrollContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                visibility: hidden;
+                z-index: -1;
+            `;
+            document.body.appendChild(scrollContainer);
 
-            // Prevent scrolling
-            const originalStyle = window.getComputedStyle(document.body).overflow;
-            document.body.style.overflow = 'hidden';
-
-            // Get the maximum scroll position
-            const maxScroll = Math.max(
+            const scrollHeight = Math.max(
                 document.body.scrollHeight,
                 document.documentElement.scrollHeight,
                 document.body.offsetHeight,
                 document.documentElement.offsetHeight
-            ) - window.innerHeight;
-
-            let currentScroll = 0;
-            const scrollStep = Math.max(1, maxScroll / 100); // Divide scroll into 100 steps
+            );
             
-            function smoothScroll() {
-                if (currentScroll >= maxScroll) {
-                    // Reset scroll position
-                    window.scrollTo(0, 0);
-                    document.body.style.overflow = originalStyle;
-                    
-                    // Hide preloader
-                    setTimeout(() => {
-                        preloader.style.opacity = '0';
-                        setTimeout(() => {
-                            preloader.style.display = 'none';
-                            resolve();
-                        }, 300);
-                    }, 200);
-                    return;
+            // Scroll smoothly to bottom in the background
+            window.scrollTo({
+                top: scrollHeight,
+                behavior: 'smooth'
+            });
+
+            // Check when scrolling is complete
+            let lastPos = window.scrollY;
+            const checkScroll = setInterval(() => {
+                if (window.scrollY === lastPos) {
+                    clearInterval(checkScroll);
+                    // Clean up
+                    document.body.removeChild(scrollContainer);
+                    resolve();
                 }
-
-                currentScroll = Math.min(currentScroll + scrollStep, maxScroll);
-                window.scrollTo(0, currentScroll);
-                requestAnimationFrame(smoothScroll);
-            }
-
-            // Start scrolling after a small delay
-            setTimeout(smoothScroll, 100);
+                lastPos = window.scrollY;
+            }, 50);
         });
     }
 
-    // Handle initial page load
-    window.addEventListener('load', function() {
-        handleLoading();
+    // Function to show preloader
+    function showPreloader() {
+        return new Promise(resolve => {
+            preloader.style.cssText = `
+                display: flex;
+                opacity: 1;
+                z-index: 10000;
+            `;
+            setTimeout(resolve, 300);
+        });
+    }
+
+    // Function to hide preloader
+    function hidePreloader() {
+        return new Promise(resolve => {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                resolve();
+            }, 300);
+        });
+    }
+
+    // Initial page load animation
+    window.addEventListener('load', async function() {
+        // Show preloader immediately
+        await showPreloader();
+        
+        // Scroll silently in the background
+        await silentScroll();
+        
+        // Quick scroll back to top (still behind preloader)
+        window.scrollTo({
+            top: 0,
+            behavior: 'auto'
+        });
+        
+        // Wait a bit then hide preloader
+        setTimeout(async () => {
+            await hidePreloader();
+        }, 500);
     });
 
     // Handle link clicks
@@ -83,7 +116,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         e.preventDefault();
-        await handleLoading();
+        
+        // Show preloader immediately
+        await showPreloader();
+        
+        // Scroll silently in the background
+        await silentScroll();
+        
+        // Quick scroll back to top (still behind preloader)
+        window.scrollTo({
+            top: 0,
+            behavior: 'auto'
+        });
+        
+        // Navigate to new page
         window.location.href = href;
     });
 });
