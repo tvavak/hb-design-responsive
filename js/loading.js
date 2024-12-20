@@ -1,7 +1,5 @@
 // Loading animation handler
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Loading script initialized');
-    
     const preloader = document.querySelector('.preloader');
     const loader = preloader.querySelector('.loader');
     
@@ -12,79 +10,60 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingLogo.alt = 'Loading...';
     loader.appendChild(loadingLogo);
 
-    // Create hidden scroll container
-    const scrollContainer = document.createElement('div');
-    scrollContainer.className = 'scroll-container';
-    document.body.appendChild(scrollContainer);
-
-    // Function to scroll with preloader
-    function scrollWithPreloader() {
+    // Function to handle loading animation
+    function handleLoading() {
         return new Promise((resolve) => {
-            console.log('Starting scroll animation');
-            
-            const scrollHeight = Math.max(
-                document.body.scrollHeight,
-                document.documentElement.scrollHeight,
-                document.body.offsetHeight,
-                document.documentElement.offsetHeight
-            );
-            
-            // Show preloader first
+            // Show preloader
             preloader.style.display = 'flex';
             requestAnimationFrame(() => {
                 preloader.style.opacity = '1';
             });
-            
-            // Enable scroll container
-            scrollContainer.style.visibility = 'visible';
-            document.body.style.overflow = 'hidden'; // Prevent main page scroll
-            
-            // Start scrolling in the container
-            setTimeout(() => {
-                scrollContainer.scrollTo({
-                    top: scrollHeight,
-                    behavior: 'smooth'
-                });
 
-                // Check when scrolling is complete
-                let lastPos = scrollContainer.scrollTop;
-                let samePositionCount = 0;
-                
-                const checkScroll = setInterval(() => {
-                    const currentPos = scrollContainer.scrollTop;
+            // Prevent scrolling
+            const originalStyle = window.getComputedStyle(document.body).overflow;
+            document.body.style.overflow = 'hidden';
+
+            // Get the maximum scroll position
+            const maxScroll = Math.max(
+                document.body.scrollHeight,
+                document.documentElement.scrollHeight,
+                document.body.offsetHeight,
+                document.documentElement.offsetHeight
+            ) - window.innerHeight;
+
+            let currentScroll = 0;
+            const scrollStep = Math.max(1, maxScroll / 100); // Divide scroll into 100 steps
+            
+            function smoothScroll() {
+                if (currentScroll >= maxScroll) {
+                    // Reset scroll position
+                    window.scrollTo(0, 0);
+                    document.body.style.overflow = originalStyle;
                     
-                    if (currentPos === lastPos) {
-                        samePositionCount++;
-                        if (samePositionCount >= 3) {
-                            clearInterval(checkScroll);
-                            
-                            // Reset scroll container
-                            scrollContainer.style.visibility = 'hidden';
-                            scrollContainer.scrollTop = 0;
-                            document.body.style.overflow = '';
-                            
-                            // Hide preloader
-                            preloader.style.opacity = '0';
-                            setTimeout(() => {
-                                preloader.style.display = 'none';
-                                resolve();
-                            }, 300);
-                        }
-                    } else {
-                        samePositionCount = 0;
-                    }
-                    lastPos = currentPos;
-                }, 100);
-            }, 100);
+                    // Hide preloader
+                    setTimeout(() => {
+                        preloader.style.opacity = '0';
+                        setTimeout(() => {
+                            preloader.style.display = 'none';
+                            resolve();
+                        }, 300);
+                    }, 200);
+                    return;
+                }
+
+                currentScroll = Math.min(currentScroll + scrollStep, maxScroll);
+                window.scrollTo(0, currentScroll);
+                requestAnimationFrame(smoothScroll);
+            }
+
+            // Start scrolling after a small delay
+            setTimeout(smoothScroll, 100);
         });
     }
 
-    // Initial page load animation
+    // Handle initial page load
     window.addEventListener('load', function() {
-        console.log('Page loaded, starting animation');
-        scrollWithPreloader().then(() => {
-            console.log('Initial animation complete');
-        });
+        handleLoading();
     });
 
     // Handle link clicks
@@ -93,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!target) return;
         
         const href = target.getAttribute('href');
-        
         if (!href || 
             target.getAttribute('target') === '_blank' || 
             target.classList.contains('no-loading') ||
@@ -105,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         e.preventDefault();
-        await scrollWithPreloader();
+        await handleLoading();
         window.location.href = href;
     });
 });
