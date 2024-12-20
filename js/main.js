@@ -60,10 +60,41 @@ const testimonialsSwiper = new Swiper('.testimonials-slider', {
 // Preloader
 window.addEventListener('load', () => {
     const preloader = document.querySelector('.preloader');
-    preloader.style.opacity = '0';
-    setTimeout(() => {
-        preloader.style.display = 'none';
-    }, 500);
+    const mapSection = document.querySelector('#map');
+    const heroSection = document.querySelector('#accueil');
+    
+    // Fonction pour vérifier si on est sur mobile
+    const isMobile = () => window.innerWidth <= 768;
+    
+    if (isMobile()) {
+        // Sur mobile, on scroll d'abord jusqu'à la map pour corriger le débordement
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'instant'
+        });
+        
+        // Après un court délai, on revient au hero
+        setTimeout(() => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'instant'
+            });
+            
+            // On masque le preloader avec une animation
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 500);
+            }, 200);
+        }, 100);
+    } else {
+        // Sur desktop, on masque simplement le preloader
+        preloader.style.opacity = '0';
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    }
 });
 
 // Smooth scroll for navigation links
@@ -232,3 +263,12 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.5 });
 
 numberElements.forEach(number => observer.observe(number));
+
+// Animation des icônes au clic
+document.querySelectorAll('.feature-icon').forEach(icon => {
+    icon.addEventListener('click', function() {
+        this.classList.remove('spin-animation');
+        void this.offsetWidth; // Déclenche un reflow pour réinitialiser l'animation
+        this.classList.add('spin-animation');
+    });
+});
